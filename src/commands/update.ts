@@ -7,8 +7,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Load package.json manually to avoid issues with JSON modules in some environments
-// Or use dynamic import / require if needed for ESM
-const pkgPath = path.join(process.cwd(), 'package.json');
+const pkgPath = new URL('../../package.json', import.meta.url);
 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
 
 const updateCommand = new Command('update');
