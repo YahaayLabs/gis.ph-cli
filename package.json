@@ -1,0 +1,48 @@
+{
+  "name": "gis.ph-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "CLI tool for GIS.ph API",
+  "main": "dist/index.js",
+  "bin": {
+    "gis.ph": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "link": "npm run build && npm link",
+    "unlink": "npm unlink -g",
+    "release": "npm run build && bash scripts/release.sh",
+    "version": "npm version"
+  },
+  "keywords": [
+    "cli",
+    "api",
+    "tool"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.3",
+    "commander": "^11.1.0",
+    "conf": "^10.2.0",
+    "dotenv": "^16.3.1",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/chalk": "^0.4.31",
+    "@types/commander": "^2.12.0",
+    "@types/node": "^25.2.3",
+    "@types/ora": "^3.1.0",
+    "eslint": "^8.55.0",
+    "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
