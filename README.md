@@ -50,12 +50,12 @@ gis.ph config set apiKey your-api-key-here
    ```bash
    npm link
    ```
-   After linking, you can use `myapi` command from anywhere.
+   After linking, you can use `gis.ph` command from anywhere.
 
 4. **Configure your API:**
    ```bash
    # Set your API URL
-   gis.ph config set apiUrl https://your-api.com
+   gis.ph config set apiUrl https://api.gis.ph
 
    # Set your API key (if required)
    gis.ph config set apiKey your-api-key-here
@@ -74,8 +74,8 @@ gis.ph config set apiKey your-api-key-here
 curl -fsSL https://yourusername.github.io/my-api-cli/uninstall.sh | bash
 
 # Or manually
-rm -rf ~/.myapi
-rm ~/.local/bin/myapi
+rm -rf ~/.gis.ph
+rm ~/.local/bin/gis.ph
 ```
 
 ## Usage
@@ -247,7 +247,7 @@ The CLI provides helpful error messages:
 
 ### Command not found
 
-If `myapi` command is not found after `npm link`:
+If `gis.ph` command is not found after `npm link`:
 ```bash
 # Unlink and relink
 npm unlink -g
@@ -258,7 +258,7 @@ npm link
 
 Check your configuration:
 ```bash
-myapi config list
+gis.ph config list
 ```
 
 Verify your API URL is correct and accessible.
@@ -267,7 +267,7 @@ Verify your API URL is correct and accessible.
 
 For more verbose output, use Node's debug mode:
 ```bash
-NODE_DEBUG=* myapi regions list
+NODE_DEBUG=* gis.ph regions list
 ```
 
 ## License

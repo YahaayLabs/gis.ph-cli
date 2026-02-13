@@ -73,7 +73,7 @@ export function getLatestVersion(): Promise<string> {
 
         https.get(url, {
             headers: {
-                'User-Agent': 'MyAPI-CLI'
+                'User-Agent': 'gis.ph-CLI'
             }
         }, (res: any) => {
             let data = '';
@@ -119,7 +119,7 @@ function getVersionFromMain(repo: string): Promise<string> {
 
         https.get(url, {
             headers: {
-                'User-Agent': 'MyAPI-CLI'
+                'User-Agent': 'gis.ph-CLI'
             }
         }, (res: any) => {
             let data = '';
@@ -274,7 +274,7 @@ async function performUpdate(force = false) {
 function getInstallDir(): string | null {
     // Method 1: Try from config file (set during installation)
     const homeDir = process.env.HOME || process.env.USERPROFILE || '';
-    const configPath = path.join(homeDir, '.config', 'myapi', 'install_dir');
+    const configPath = path.join(homeDir, '.config', 'gis.ph', 'install_dir');
     if (fs.existsSync(configPath)) {
         const installDir = fs.readFileSync(configPath, 'utf8').trim();
         if (installDir && fs.existsSync(installDir)) {
@@ -283,13 +283,13 @@ function getInstallDir(): string | null {
     }
 
     // Method 2: Try environment variable
-    if (process.env.MYAPI_INSTALL_DIR && fs.existsSync(process.env.MYAPI_INSTALL_DIR)) {
-        return process.env.MYAPI_INSTALL_DIR;
+    if (process.env.gis.ph_INSTALL_DIR && fs.existsSync(process.env.gis.ph_INSTALL_DIR)) {
+        return process.env.gis.ph_INSTALL_DIR;
     }
 
     // Method 3: Try common installation paths
     const possiblePaths = [
-        path.join(homeDir, '.myapi'),
+        path.join(homeDir, '.gis.ph'),
         path.join(homeDir, '.my-api-cli'),
     ];
 
