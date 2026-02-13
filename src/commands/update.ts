@@ -283,8 +283,9 @@ function getInstallDir(): string | null {
     }
 
     // Method 2: Try environment variable
-    if (process.env.gis.ph_INSTALL_DIR && fs.existsSync(process.env.gis.ph_INSTALL_DIR)) {
-        return process.env.gis.ph_INSTALL_DIR;
+    const envInstallDir = process.env['GIS.PH_INSTALL_DIR'];
+    if (envInstallDir && fs.existsSync(envInstallDir)) {
+        return envInstallDir;
     }
 
     // Method 3: Try common installation paths

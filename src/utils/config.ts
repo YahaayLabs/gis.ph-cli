@@ -7,10 +7,11 @@ interface ConfigSchema {
     [key: string]: any;
 }
 
-let config: Conf<ConfigSchema>;
+let config: any;
 
 export function getConfig() {
     if (!config) {
+        // @ts-ignore
         config = new Conf<ConfigSchema>({
             projectName: 'gis.ph',
             defaults: {
