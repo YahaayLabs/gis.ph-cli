@@ -3,6 +3,14 @@
   "version": "1.0.1",
   "type": "module",
   "description": "CLI tool for GIS.ph API",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YahaayLabs/gis.ph-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YahaayLabs/gis.ph-cli/issues"
+  },
+  "homepage": "https://github.com/YahaayLabs/gis.ph-cli#readme",
   "main": "dist/index.js",
   "bin": {
     "gis.ph": "dist/index.js"
