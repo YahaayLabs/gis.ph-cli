@@ -80,6 +80,30 @@ class ApiClient {
     async getRegionById(id: string | number) {
         return this.get(`/v1/regions/${id}`);
     }
+
+    async getProvinces(params: any = {}) {
+        return this.get('/v1/provinces', params);
+    }
+
+    async getProvinceById(id: string | number, params: any = {}) {
+        return this.get(`/v1/provinces/${id}`, params);
+    }
+
+    async getMuniCities(params: any = {}) {
+        return this.get('/v1/municities', params);
+    }
+
+    async getMuniCityById(id: string | number, params: any = {}) {
+        return this.get(`/v1/municities/${id}`, params);
+    }
+
+    async getBarangays(params: any = {}) {
+        return this.get('/v1/barangays', params);
+    }
+
+    async getBarangayById(id: string | number) {
+        return this.get(`/v1/barangays/${id}`);
+    }
 }
 
 export default new ApiClient();

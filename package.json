@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "link": "npm run build && npm link",
@@ -16,6 +17,9 @@
     "release": "npm run build && bash scripts/release.sh",
     "version": "npm version"
   },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "cli",
     "api",

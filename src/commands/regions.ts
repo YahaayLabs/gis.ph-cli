@@ -16,6 +16,7 @@ function createListCommand() {
         .description('List all regions')
         .option('-f, --format <type>', 'Output format (table|json)', 'table')
         .option('-l, --limit <number>', 'Limit number of results')
+        .option('-p, --page <number>', 'Page number')
         .option('--filter <field:value>', 'Filter results (e.g., status:active)')
         .action(async (options) => {
             const spinner = ora('Fetching regions...').start();
@@ -26,20 +27,24 @@ function createListCommand() {
                 if (options.limit) {
                     params.limit = parseInt(options.limit);
                 }
+                if (options.page) {
+                    params.page = parseInt(options.page);
+                }
                 if (options.filter) {
                     const [field, value] = options.filter.split(':');
                     params[field] = value;
                 }
 
-                const data = await apiClient.getRegions(params);
+                const response = await apiClient.getRegions(params);
                 spinner.succeed('Regions fetched successfully');
 
                 // Display results
                 if (options.format === 'json') {
-                    console.log(formatJson(data));
+                    console.log(formatJson(response));
                 } else {
-                    // The API now returns { data: [...], error: null }
-                    const regions = Array.isArray(data) ? data : ((data as any).data || (data as any).regions || []);
+                    // Handle new API response structure { data: [...], meta: {...} }
+                    const regions = response.data || (Array.isArray(response) ? response : []);
+                    const meta = response.meta || {};
 
                     if (regions.length === 0) {
                         console.log(chalk.yellow('\nNo regions found.\n'));
@@ -49,12 +54,17 @@ function createListCommand() {
                     const tableData = regions.map((region: any) => ({
                         ID: region.id || 'N/A',
                         Name: region.name || 'N/A',
-                        Title: region.title || 'N/A',
+                        Title: region.title || region.designation || 'N/A',
                         Code: region.code || 'N/A',
                     }));
 
                     console.log(formatTable(tableData));
-                    console.log(chalk.gray(`\nTotal: ${regions.length} region(s)\n`));
+
+                    if (meta.page) {
+                        console.log(chalk.gray(`Page ${meta.page} of ${meta.totalPages || '?'} | Total: ${meta.total || regions.length} region(s)`));
+                    } else {
+                        console.log(chalk.gray(`\nTotal: ${regions.length} region(s)\n`));
+                    }
                 }
             } catch (error: any) {
                 spinner.fail('Failed to fetch regions');

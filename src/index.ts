@@ -8,6 +8,9 @@ import { autoCheckForUpdates, isAutoUpdateDisabled } from './utils/auto-update.j
 
 // Import commands
 import regionsCommand from './commands/regions.js';
+import provincesCommand from './commands/provinces.js';
+import municitiesCommand from './commands/municities.js';
+import barangaysCommand from './commands/barangays.js';
 import configCommand from './commands/config.js';
 import updateCommand from './commands/update.js';
 
@@ -24,6 +27,9 @@ program
 
 // Add commands
 program.addCommand(regionsCommand);
+program.addCommand(provincesCommand);
+program.addCommand(municitiesCommand);
+program.addCommand(barangaysCommand);
 program.addCommand(configCommand);
 program.addCommand(updateCommand);
 

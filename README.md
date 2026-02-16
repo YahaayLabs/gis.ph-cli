@@ -1,7 +1,7 @@
-# My API CLI
+# GIS.ph CLI
 
-A command-line interface for interacting with your API.
-
+A command-line interface for interacting with GIS.ph API.
+   
 ## Features
 
 - 🚀 Simple and intuitive commands
@@ -121,20 +121,62 @@ The CLI automatically checks for updates once per day and notifies you if a new 
 # List all regions (table format)
 gis.ph regions list
 
+# List with pagination
+gis.ph regions list --limit 5 --page 2
+
 # List regions in JSON format
 gis.ph regions list --format json
 
-# List with limit
-gis.ph regions list --limit 10
-
-# Filter regions
+# Filter regions (e.g., status:active)
 gis.ph regions list --filter status:active
 
 # Get specific region by ID
 gis.ph regions get <region-id>
+```
 
-# Get region in table format
-gis.ph regions get <region-id> --format table
+### Provinces Commands
+
+```bash
+# List all provinces
+gis.ph provinces list
+
+# List with pagination
+gis.ph provinces list --limit 10 --page 1
+
+# Get specific province details
+gis.ph provinces get <province-id>
+
+# Get province details with GeoJSON boundaries
+gis.ph provinces get <province-id> --geometry
+```
+
+### Cities and Municipalities Commands
+
+```bash
+# List all cities/municipalities in a province (REQUIRED)
+gis.ph municities list --province "Bohol"
+
+# Filter by name (starts with)
+gis.ph municities list --province "Bohol" --name "Al"
+
+# Get specific municipality details
+gis.ph municities get <municity-id>
+
+# Get municipality details with barangay boundaries (GeoJSON)
+gis.ph municities get <municity-id> --geometry
+```
+
+### Barangays Commands
+
+```bash
+# List barangays in a province (REQUIRED)
+gis.ph barangays list --province "Cebu"
+
+# Filter by municipality and/or barangay name
+gis.ph barangays list --province "Cebu" --municipality "Poro" --name "Pob"
+
+# Get specific barangay details
+gis.ph barangays get <barangay-id>
 ```
 
 ### Examples
@@ -147,8 +189,14 @@ gis.ph config set apiKey sk_live_abc123
 # List all regions
 gis.ph regions list
 
-# Get specific region
-gis.ph regions get us-east-1
+# Get all provinces in Region 7
+gis.ph provinces list --limit 100 --page 1
+
+# Find a town in Bohol
+gis.ph municities list --province "Bohol" --name "Al"
+
+# Get a specific barangay info
+gis.ph barangays get 12345
 
 # List regions as JSON for scripting
 gis.ph regions list --format json | jq '.regions[0]'
@@ -173,18 +221,24 @@ node src/index.js regions list
 ### Project Structure
 
 ```
-my-api-cli/
+gis.ph-cli/
 ├── src/
-│   ├── index.js              # Main CLI entry point
+│   ├── index.ts              # Main CLI entry point
 │   ├── commands/             # Command implementations
-│   │   ├── regions.js        # Regions commands
-│   │   └── config.js         # Config commands
+│   │   ├── regions.ts        # Regions commands
+│   │   ├── provinces.ts      # Provinces commands
+│   │   ├── municities.ts     # Cities/Municipalities commands
+│   │   ├── barangays.ts      # Barangays commands
+│   │   ├── update.ts         # Self-update logic
+│   │   └── config.ts         # Config commands
 │   ├── lib/                  # Core libraries
-│   │   └── api-client.js     # API HTTP client
+│   │   └── api-client.ts     # API HTTP client
 │   └── utils/                # Utility functions
-│       ├── config.js         # Configuration management
-│       └── formatter.js      # Output formatting
+│       ├── config.ts         # Configuration management
+│       ├── formatter.ts      # Output formatting
+│       └── auto-update.ts    # Background update checker
 ├── package.json
+├── tsconfig.json
 ├── .env.example
 └── README.md
 ```
@@ -192,8 +246,8 @@ my-api-cli/
 ### Adding New Commands
 
 1. Create a new command file in `src/commands/`:
-   ```javascript
-   const { Command } = require('commander');
+   ```typescript
+   import { Command } from 'commander';
    
    const myCommand = new Command('mycommand');
    
@@ -203,12 +257,12 @@ my-api-cli/
        // Your logic here
      });
    
-   module.exports = myCommand;
+   export default myCommand;
    ```
 
-2. Register it in `src/index.js`:
-   ```javascript
-   const myCommand = require('./commands/mycommand');
+2. Register it in `src/index.ts`:
+   ```typescript
+   import myCommand from './commands/mycommand.js';
    program.addCommand(myCommand);
    ```
 
