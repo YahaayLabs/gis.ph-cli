@@ -104,6 +104,34 @@ class ApiClient {
     async getBarangayById(id: string | number) {
         return this.get(`/v1/barangays/${id}`);
     }
+
+    async getPoliticians(params: any = {}) {
+        return this.get('/v1/politicians', params);
+    }
+
+    async searchPoliticians(params: any = {}) {
+        return this.get('/v1/politicians/search', params);
+    }
+
+    async getPoliticianById(id: string) {
+        return this.get(`/v1/politicians/${id}`);
+    }
+
+    async getPoliticianAliases(id: string) {
+        return this.get(`/v1/politicians/${id}/aliases`);
+    }
+
+    async getPoliticianMemberships(id: string) {
+        return this.get(`/v1/politicians/${id}/party-memberships`);
+    }
+
+    async getPoliticianTenures(id: string) {
+        return this.get(`/v1/politicians/${id}/tenures`);
+    }
+
+    async getPoliticianCurrentPositions(id: string) {
+        return this.get(`/v1/politicians/${id}/current-positions`);
+    }
 }
 
 export default new ApiClient();

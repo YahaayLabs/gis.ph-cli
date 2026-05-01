@@ -13,6 +13,7 @@ import municitiesCommand from './commands/municities.js';
 import barangaysCommand from './commands/barangays.js';
 import configCommand from './commands/config.js';
 import updateCommand from './commands/update.js';
+import politiciansCommand from './commands/politicians.js';
 
 // Load package.json manually
 const pkgPath = new URL('../package.json', import.meta.url);
@@ -30,6 +31,7 @@ program.addCommand(regionsCommand);
 program.addCommand(provincesCommand);
 program.addCommand(municitiesCommand);
 program.addCommand(barangaysCommand);
+program.addCommand(politiciansCommand);
 program.addCommand(configCommand);
 program.addCommand(updateCommand);
 
