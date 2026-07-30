@@ -130,8 +130,8 @@ gis.ph regions list --format json
 # Filter regions (e.g., status:active)
 gis.ph regions list --filter status:active
 
-# Get specific region by ID
-gis.ph regions get <region-id>
+# Get region by PSGC code
+gis.ph regions get 0700000000
 ```
 
 ### Provinces Commands
@@ -143,11 +143,11 @@ gis.ph provinces list
 # List with pagination
 gis.ph provinces list --limit 10 --page 1
 
-# Get specific province details
-gis.ph provinces get <province-id>
+# Get province by PSGC code
+gis.ph provinces get 0702200000
 
-# Get province details with GeoJSON boundaries
-gis.ph provinces get <province-id> --geometry
+# Get province with GeoJSON boundaries
+gis.ph provinces get 0702200000 --geometry
 ```
 
 ### Cities and Municipalities Commands
@@ -159,11 +159,11 @@ gis.ph municities list --province "Bohol"
 # Filter by name (starts with)
 gis.ph municities list --province "Bohol" --name "Al"
 
-# Get specific municipality details
-gis.ph municities get <municity-id>
+# Get municipality by PSGC code
+gis.ph municities get 0730600000
 
-# Get municipality details with barangay boundaries (GeoJSON)
-gis.ph municities get <municity-id> --geometry
+# Get municipality with barangay boundaries (GeoJSON)
+gis.ph municities get 0730600000 --geometry
 ```
 
 ### Barangays Commands
@@ -175,8 +175,8 @@ gis.ph barangays list --province "Cebu"
 # Filter by municipality and/or barangay name
 gis.ph barangays list --province "Cebu" --municipality "Poro" --name "Pob"
 
-# Get specific barangay details
-gis.ph barangays get <barangay-id>
+# Get barangay by PSGC code
+gis.ph barangays get 0730600041
 ```
 
 ### Examples
