@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import apiClient from '../lib/api-client.js';
 import { formatTable, formatJson } from '../utils/formatter.js';
+import { formatListFooter, unwrapList, unwrapOne } from '../utils/api-response.js';
 
 const municitiesCommand = new Command('municities');
 
@@ -25,8 +26,8 @@ function createListCommand() {
             try {
                 const params: any = {
                     province: options.province,
-                    limit: parseInt(options.limit),
-                    page: parseInt(options.page)
+                    limit: parseInt(options.limit, 10),
+                    page: parseInt(options.page, 10),
                 };
 
                 if (options.name) {
@@ -38,30 +39,28 @@ function createListCommand() {
 
                 if (options.format === 'json') {
                     console.log(formatJson(response));
-                } else {
-                    const data = response.data || [];
-                    const meta = response.meta || {};
-
-                    if (data.length === 0) {
-                        console.log(chalk.yellow('\nNo cities or municipalities found.\n'));
-                        return;
-                    }
-
-                    const tableData = data.map((item: any) => ({
-                        ID: item.id || 'N/A',
-                        Name: item.name || 'N/A',
-                        Type: item.type || 'N/A',
-                        Province: typeof item.province === 'object' ? item.province.name : (item.province || 'N/A'),
-                    }));
-
-                    console.log(formatTable(tableData));
-
-                    if (meta.page) {
-                        console.log(chalk.gray(`Page ${meta.page} of ${meta.totalPages || '?'} | Total: ${meta.total || data.length} item(s)`));
-                    } else {
-                        console.log(chalk.gray(`\nTotal: ${data.length} item(s)\n`));
-                    }
+                    return;
                 }
+
+                const { items: data, meta } = unwrapList(response);
+
+                if (data.length === 0) {
+                    console.log(chalk.yellow('\nNo cities or municipalities found.\n'));
+                    return;
+                }
+
+                const tableData = data.map((item: any) => ({
+                    ID: item.id || 'N/A',
+                    Name: item.name || 'N/A',
+                    Type: item.type || item.city_class || 'N/A',
+                    Code: item.code || 'N/A',
+                    Province: typeof item.province === 'object'
+                        ? item.province.name
+                        : (item.province || item.p_code || 'N/A'),
+                }));
+
+                console.log(formatTable(tableData));
+                console.log(chalk.gray(formatListFooter(meta, data.length, 'item(s)')));
             } catch (error: any) {
                 spinner.fail('Failed to fetch data');
                 console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -73,16 +72,16 @@ function createListCommand() {
 function createGetCommand() {
     return new Command('get')
         .description('Get details of a specific city or municipality')
-        .argument('<id>', 'Municipality ID')
+        .argument('<id>', 'Municipality ID or PSGC code')
         .option('-f, --format <type>', 'Output format (table|json)', 'json')
-        .option('-g, --geometry', 'Include GeoJSON boundaries (barangays)', false)
+        .option('-g, --geometry', 'Include GeoJSON boundaries', false)
         .action(async (id: string, options) => {
             const spinner = ora(`Fetching municipality ${id}...`).start();
 
             try {
                 const params: any = {};
                 if (options.geometry) {
-                    params.geometry = 'true';
+                    params.geometry = 'simple';
                 }
 
                 const response = await apiClient.getMuniCityById(id, params);
@@ -90,19 +89,16 @@ function createGetCommand() {
 
                 if (options.format === 'json') {
                     console.log(formatJson(response));
-                } else {
-                    const data = response.data || response;
-                    const tableData = Object.entries(data).map(([key, value]) => ({
-                        Field: key,
-                        Value: typeof value === 'object' ? JSON.stringify(value) : value,
-                    }));
-
-                    console.log(formatTable(tableData));
-
-                    if (response.geojson) {
-                        console.log(chalk.green('\nGeoJSON boundaries (barangays) included in response.\n'));
-                    }
+                    return;
                 }
+
+                const data = unwrapOne(response);
+                const tableData = Object.entries(data as object).map(([key, value]) => ({
+                    Field: key,
+                    Value: typeof value === 'object' ? JSON.stringify(value) : value,
+                }));
+
+                console.log(formatTable(tableData));
             } catch (error: any) {
                 spinner.fail(`Failed to fetch municipality ${id}`);
                 console.error(chalk.red(`\nError: ${error.message}\n`));

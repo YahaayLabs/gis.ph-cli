@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import apiClient from '../lib/api-client.js';
 import { formatTable, formatJson } from '../utils/formatter.js';
+import { formatListFooter, unwrapList, unwrapOne } from '../utils/api-response.js';
 
 const barangaysCommand = new Command('barangays');
 
@@ -26,8 +27,8 @@ function createListCommand() {
             try {
                 const params: any = {
                     province: options.province,
-                    limit: parseInt(options.limit),
-                    page: parseInt(options.page)
+                    limit: parseInt(options.limit, 10),
+                    page: parseInt(options.page, 10),
                 };
 
                 if (options.municipality) {
@@ -43,31 +44,26 @@ function createListCommand() {
 
                 if (options.format === 'json') {
                     console.log(formatJson(response));
-                } else {
-                    const data = response.data || [];
-                    const meta = response.meta || {};
-
-                    if (data.length === 0) {
-                        console.log(chalk.yellow('\nNo barangays found.\n'));
-                        return;
-                    }
-
-                    const tableData = data.map((item: any) => ({
-                        ID: item.id || 'N/A',
-                        Name: item.name || 'N/A',
-                        Code: item.code || 'N/A',
-                        Population: item.population ?? 'N/A',
-                        MunicipalityID: item.municipality_id || 'N/A',
-                    }));
-
-                    console.log(formatTable(tableData));
-
-                    if (meta.page) {
-                        console.log(chalk.gray(`Page ${meta.page} of ${meta.totalPages || '?'} | Total: ${meta.total || data.length} barangay(s)`));
-                    } else {
-                        console.log(chalk.gray(`\nTotal: ${data.length} barangay(s)\n`));
-                    }
+                    return;
                 }
+
+                const { items: data, meta } = unwrapList(response);
+
+                if (data.length === 0) {
+                    console.log(chalk.yellow('\nNo barangays found.\n'));
+                    return;
+                }
+
+                const tableData = data.map((item: any) => ({
+                    ID: item.id || 'N/A',
+                    Name: item.name || 'N/A',
+                    Code: item.code || 'N/A',
+                    Population: item.population ?? 'N/A',
+                    MunicipalityID: item.municipality_id || item.l_code || 'N/A',
+                }));
+
+                console.log(formatTable(tableData));
+                console.log(chalk.gray(formatListFooter(meta, data.length, 'barangay(s)')));
             } catch (error: any) {
                 spinner.fail('Failed to fetch barangays');
                 console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -79,7 +75,7 @@ function createListCommand() {
 function createGetCommand() {
     return new Command('get')
         .description('Get details of a specific barangay')
-        .argument('<id>', 'Barangay ID')
+        .argument('<id>', 'Barangay ID or PSGC code')
         .option('-f, --format <type>', 'Output format (table|json)', 'json')
         .action(async (id: string, options) => {
             const spinner = ora(`Fetching barangay ${id}...`).start();
@@ -90,15 +86,16 @@ function createGetCommand() {
 
                 if (options.format === 'json') {
                     console.log(formatJson(response));
-                } else {
-                    const data = response.data || response;
-                    const tableData = Object.entries(data).map(([key, value]) => ({
-                        Field: key,
-                        Value: typeof value === 'object' ? JSON.stringify(value) : value,
-                    }));
-
-                    console.log(formatTable(tableData));
+                    return;
                 }
+
+                const data = unwrapOne(response);
+                const tableData = Object.entries(data as object).map(([key, value]) => ({
+                    Field: key,
+                    Value: typeof value === 'object' ? JSON.stringify(value) : value,
+                }));
+
+                console.log(formatTable(tableData));
             } catch (error: any) {
                 spinner.fail(`Failed to fetch barangay ${id}`);
                 console.error(chalk.red(`\nError: ${error.message}\n`));

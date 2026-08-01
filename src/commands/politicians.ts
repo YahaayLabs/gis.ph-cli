@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import apiClient from '../lib/api-client.js';
 import { formatTable, formatJson } from '../utils/formatter.js';
+import { formatListFooter, unwrapList, unwrapOne } from '../utils/api-response.js';
 
 const politiciansCommand = new Command('politicians');
 
@@ -18,7 +19,7 @@ politiciansCommand
 
 function createListCommand() {
   return new Command('list')
-    .description('List all politicians')
+    .description('List politicians (paginated)')
     .option('-f, --format <type>', 'Output format (table|json)', 'table')
     .option('-l, --limit <number>', 'Limit number of results', '20')
     .option('-p, --page <number>', 'Page number', '1')
@@ -27,8 +28,8 @@ function createListCommand() {
 
       try {
         const params = {
-          limit: parseInt(options.limit),
-          page: parseInt(options.page),
+          limit: parseInt(options.limit, 10),
+          page: parseInt(options.page, 10),
         };
 
         const response = await apiClient.getPoliticians(params);
@@ -36,31 +37,26 @@ function createListCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const politicians = response.data || (Array.isArray(response) ? response : []);
-          const meta = response.meta || {};
-
-          if (politicians.length === 0) {
-            console.log(chalk.yellow('\nNo politicians found.\n'));
-            return;
-          }
-
-          const tableData = politicians.map((p: any) => ({
-            ID: p.id || 'N/A',
-            'First Name': p.firstName || 'N/A',
-            'Last Name': p.lastName || 'N/A',
-            Gender: p.gender || 'N/A',
-            Nationality: p.nationality || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-
-          if (meta.page) {
-            console.log(chalk.gray(`Page ${meta.page} of ${meta.totalPages || '?'} | Total: ${meta.total || politicians.length} politician(s)`));
-          } else {
-            console.log(chalk.gray(`\nTotal: ${politicians.length} politician(s)\n`));
-          }
+          return;
         }
+
+        const { items: politicians, meta } = unwrapList(response);
+
+        if (politicians.length === 0) {
+          console.log(chalk.yellow('\nNo politicians found.\n'));
+          return;
+        }
+
+        const tableData = politicians.map((p: any) => ({
+          ID: p.id || 'N/A',
+          'First Name': p.firstName || 'N/A',
+          'Last Name': p.lastName || 'N/A',
+          Gender: p.gender || 'N/A',
+          Nationality: p.nationality || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(meta, politicians.length, 'politician(s)')));
       } catch (error: any) {
         spinner.fail('Failed to fetch politicians');
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -78,16 +74,22 @@ function createSearchCommand() {
     .option('--branch <branch>', 'Filter by government branch')
     .option('--status <status>', 'Filter by status')
     .option('-l, --limit <number>', 'Limit number of results', '20')
-    .option('--offset <number>', 'Offset for pagination', '0')
+    .option('-p, --page <number>', 'Page number', '1')
+    .option('--offset <number>', 'Deprecated: use --page instead')
     .option('-f, --format <type>', 'Output format (table|json)', 'table')
     .action(async (options) => {
       const spinner = ora('Searching politicians...').start();
 
       try {
         const params: any = {
-          limit: parseInt(options.limit),
-          offset: parseInt(options.offset),
+          limit: parseInt(options.limit, 10),
+          page: parseInt(options.page, 10),
         };
+        // Legacy offset only when page left at default and offset explicitly set
+        if (options.offset != null && options.offset !== '0' && options.page === '1') {
+          params.offset = parseInt(options.offset, 10);
+          delete params.page;
+        }
         if (options.query) params.q = options.query;
         if (options.gender) params.gender = options.gender;
         if (options.party) params.partyId = options.party;
@@ -99,25 +101,26 @@ function createSearchCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const politicians = Array.isArray(response) ? response : (response.data || []);
-
-          if (politicians.length === 0) {
-            console.log(chalk.yellow('\nNo politicians found.\n'));
-            return;
-          }
-
-          const tableData = politicians.map((p: any) => ({
-            ID: p.id || 'N/A',
-            'First Name': p.firstName || 'N/A',
-            'Last Name': p.lastName || 'N/A',
-            Gender: p.gender || 'N/A',
-            Nationality: p.nationality || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-          console.log(chalk.gray(`\nTotal results: ${politicians.length}\n`));
+          return;
         }
+
+        const { items: politicians, meta } = unwrapList(response);
+
+        if (politicians.length === 0) {
+          console.log(chalk.yellow('\nNo politicians found.\n'));
+          return;
+        }
+
+        const tableData = politicians.map((p: any) => ({
+          ID: p.id || 'N/A',
+          'First Name': p.firstName || 'N/A',
+          'Last Name': p.lastName || 'N/A',
+          Gender: p.gender || 'N/A',
+          Nationality: p.nationality || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(meta, politicians.length, 'result(s)')));
       } catch (error: any) {
         spinner.fail('Search failed');
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -140,14 +143,15 @@ function createGetCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const politician = response.data || response;
-          const tableData = Object.entries(politician).map(([key, value]) => ({
-            Field: key,
-            Value: typeof value === 'object' ? JSON.stringify(value) : value,
-          }));
-          console.log(formatTable(tableData));
+          return;
         }
+
+        const politician = unwrapOne(response);
+        const tableData = Object.entries(politician as object).map(([key, value]) => ({
+          Field: key,
+          Value: typeof value === 'object' ? JSON.stringify(value) : value,
+        }));
+        console.log(formatTable(tableData));
       } catch (error: any) {
         spinner.fail(`Failed to fetch politician ${id}`);
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -170,23 +174,24 @@ function createAliasesCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const aliases = Array.isArray(response) ? response : (response.data || []);
-
-          if (aliases.length === 0) {
-            console.log(chalk.yellow('\nNo aliases found.\n'));
-            return;
-          }
-
-          const tableData = aliases.map((a: any) => ({
-            ID: a.id || 'N/A',
-            Alias: a.alias || 'N/A',
-            Type: a.aliasType || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-          console.log(chalk.gray(`\nTotal: ${aliases.length} alias(es)\n`));
+          return;
         }
+
+        const { items: aliases } = unwrapList(response);
+
+        if (aliases.length === 0) {
+          console.log(chalk.yellow('\nNo aliases found.\n'));
+          return;
+        }
+
+        const tableData = aliases.map((a: any) => ({
+          ID: a.id || 'N/A',
+          Alias: a.alias || 'N/A',
+          Type: a.aliasType || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(undefined, aliases.length, 'alias(es)')));
       } catch (error: any) {
         spinner.fail(`Failed to fetch aliases for politician ${id}`);
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -209,25 +214,26 @@ function createMembershipsCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const memberships = Array.isArray(response) ? response : (response.data || []);
-
-          if (memberships.length === 0) {
-            console.log(chalk.yellow('\nNo party memberships found.\n'));
-            return;
-          }
-
-          const tableData = memberships.map((m: any) => ({
-            ID: m.id || 'N/A',
-            'Party ID': m.partyId || 'N/A',
-            'Date Joined': m.dateJoined || 'N/A',
-            'Date Left': m.dateLeft || 'N/A',
-            Role: m.roleInParty || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-          console.log(chalk.gray(`\nTotal: ${memberships.length} membership(s)\n`));
+          return;
         }
+
+        const { items: memberships } = unwrapList(response);
+
+        if (memberships.length === 0) {
+          console.log(chalk.yellow('\nNo party memberships found.\n'));
+          return;
+        }
+
+        const tableData = memberships.map((m: any) => ({
+          ID: m.id || 'N/A',
+          'Party ID': m.partyId || 'N/A',
+          'Date Joined': m.dateJoined || 'N/A',
+          'Date Left': m.dateLeft || 'N/A',
+          Role: m.roleInParty || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(undefined, memberships.length, 'membership(s)')));
       } catch (error: any) {
         spinner.fail(`Failed to fetch party memberships for politician ${id}`);
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -250,24 +256,25 @@ function createTenuresCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const tenures = Array.isArray(response) ? response : (response.data || []);
-
-          if (tenures.length === 0) {
-            console.log(chalk.yellow('\nNo tenures found.\n'));
-            return;
-          }
-
-          const tableData = tenures.map((t: any) => ({
-            ID: t.id || 'N/A',
-            Position: t.positionTitle || t.position || 'N/A',
-            'Start Date': t.startDate || 'N/A',
-            'End Date': t.endDate || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-          console.log(chalk.gray(`\nTotal: ${tenures.length} tenure(s)\n`));
+          return;
         }
+
+        const { items: tenures } = unwrapList(response);
+
+        if (tenures.length === 0) {
+          console.log(chalk.yellow('\nNo tenures found.\n'));
+          return;
+        }
+
+        const tableData = tenures.map((t: any) => ({
+          ID: t.id || 'N/A',
+          Position: t.positionTitle || t.position || 'N/A',
+          'Start Date': t.startDate || 'N/A',
+          'End Date': t.endDate || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(undefined, tenures.length, 'tenure(s)')));
       } catch (error: any) {
         spinner.fail(`Failed to fetch tenures for politician ${id}`);
         console.error(chalk.red(`\nError: ${error.message}\n`));
@@ -290,23 +297,24 @@ function createCurrentPositionsCommand() {
 
         if (options.format === 'json') {
           console.log(formatJson(response));
-        } else {
-          const positions = Array.isArray(response) ? response : (response.data || []);
-
-          if (positions.length === 0) {
-            console.log(chalk.yellow('\nNo current positions found.\n'));
-            return;
-          }
-
-          const tableData = positions.map((p: any) => ({
-            ID: p.id || 'N/A',
-            Position: p.positionTitle || p.position || 'N/A',
-            'Start Date': p.startDate || 'N/A',
-          }));
-
-          console.log(formatTable(tableData));
-          console.log(chalk.gray(`\nTotal: ${positions.length} position(s)\n`));
+          return;
         }
+
+        const { items: positions } = unwrapList(response);
+
+        if (positions.length === 0) {
+          console.log(chalk.yellow('\nNo current positions found.\n'));
+          return;
+        }
+
+        const tableData = positions.map((p: any) => ({
+          ID: p.id || 'N/A',
+          Position: p.positionTitle || p.position || 'N/A',
+          'Start Date': p.startDate || 'N/A',
+        }));
+
+        console.log(formatTable(tableData));
+        console.log(chalk.gray(formatListFooter(undefined, positions.length, 'position(s)')));
       } catch (error: any) {
         spinner.fail(`Failed to fetch current positions for politician ${id}`);
         console.error(chalk.red(`\nError: ${error.message}\n`));

@@ -1,6 +1,6 @@
 {
   "name": "gis.ph-cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "module",
   "description": "CLI tool for GIS.ph API",
   "repository": {

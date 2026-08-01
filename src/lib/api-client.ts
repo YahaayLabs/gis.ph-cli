@@ -38,8 +38,13 @@ class ApiClient {
             (response) => response,
             (error) => {
                 if (error.response) {
-                    // Server responded with error status
-                    const message = error.response.data?.message || error.response.statusText;
+                    // Server responded with error status — support bare message and envelope shapes
+                    const body = error.response.data;
+                    const message =
+                        body?.message ||
+                        body?.error?.message ||
+                        (typeof body?.error === "string" ? body.error : null) ||
+                        error.response.statusText;
                     throw new Error(`API Error (${error.response.status}): ${message}`);
                 } else if (error.request) {
                     // Request made but no response
