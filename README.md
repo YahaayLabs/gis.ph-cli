@@ -1,6 +1,6 @@
-# GIS.ph CLI
+# GIS.PH CLI
 
-A command-line interface for interacting with GIS.ph API.
+A command-line interface for interacting with GIS.PH API.
    
 ## Features
 

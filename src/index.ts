@@ -23,7 +23,7 @@ const program = new Command();
 
 program
     .name('gis.ph')
-    .description('CLI tool for GIS.ph API')
+    .description('CLI tool for GIS.PH API')
     .version(pkg.version);
 
 // Add commands
